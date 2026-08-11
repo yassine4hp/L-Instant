@@ -377,6 +377,12 @@ function initWatchModal() {
   const mainImage = document.getElementById("watch-main-image");
   const thumbnails = document.querySelectorAll(".watch-thumbnail");
   const orderForm = document.getElementById("watch-order-form");
+  const successBox = document.getElementById("watch-success");
+  const submitButton = orderForm
+  ? orderForm.querySelector('button[type="submit"]')
+  : null;
+
+let isSubmitting = false;
 
   if (
     !modal ||
@@ -486,9 +492,24 @@ thumbnails.forEach(function (thumbnail) {
   orderForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
+    // منع double click
+    if (isSubmitting) {
+      return;
+    }
+
+    // نتأكد أن الساعة مختارة
     if (!selectedWatch) {
       alert("Veuillez sélectionner une montre.");
       return;
+    }
+
+    // الطلب بدا
+    isSubmitting = true;
+
+    // نعطل زر Commander
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Envoi en cours...";
     }
 
     const customerName = orderForm.querySelector('[name="name"]').value.trim();
@@ -526,15 +547,51 @@ thumbnails.forEach(function (thumbnail) {
 
       console.log("Commande enregistrée :", result);
 
-      alert("Votre commande a été enregistrée avec succès ✅");
+    orderForm.hidden = true;
 
-      orderForm.reset();
-      closeModal();
+if (successBox) {
+  successBox.hidden = false;
+}
+
+setTimeout(function () {
+
+  // نسدو الـ modal من بعد جوج ثواني
+  closeModal();
+
+  // نرجعو كلشي للحالة الأصلية
+  setTimeout(function () {
+
+    orderForm.reset();
+    orderForm.hidden = false;
+
+    if (successBox) {
+      successBox.hidden = true;
+    }
+
+    isSubmitting = false;
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Commander";
+    }
+
+  }, 300);
+
+}, 2000);
 
     } catch (error) {
-      console.error("Erreur commande :", error);
-      alert("Une erreur est survenue. Veuillez réessayer.");
-    }
+
+  console.error("Erreur commande :", error);
+
+  isSubmitting = false;
+
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = "Commander";
+  }
+
+  alert("Une erreur est survenue. Veuillez réessayer.");
+}
   });
 }
   closeButton.addEventListener("click", closeModal);
